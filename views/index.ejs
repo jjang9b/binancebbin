@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>BinanceApi</title>
+    <link rel='stylesheet' href='/css/a.css' />
   </head>
   <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+    <div class="wrap">
+      <h1><%= coinUsdt %> 현재 가격</h1>
+      <p><%= coinUsdtTicker %></p>
+      <br />
+      <h1><%= coin %> 현재 가격</h1>
+      <p><%= coinTicker %></p>
+      <p>
+        <span id="btn_buy" class="btn color-black">구매</span>
+        &nbsp;&nbsp;
+        <a href="/h" class="btn color-yellow">구매 내역 조회</a>
+      </p>
+    </div>
   </body>
+  <script type="text/javascript" src="/js/jquery.min.js"></script>
+  <script type="text/javascript" src="/js/a.js"></script>
 </html>
