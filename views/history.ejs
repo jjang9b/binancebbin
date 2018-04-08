@@ -7,11 +7,15 @@
   </head>
   <body>
     <div class="wrap">
-      <h1><%= coin %> 구매 내역</h1>
+      <h1>구매 내역</h1>
       <p>
         <ul>
-          <% for (var h in trades) { %>
-          <li><%= trades[h] %></li>
+          <% for (var h in result) { %>
+          <li>코인 이름 : <span class="text-red"><%= result[h].coinName %></span>
+          , 코인 가격 : <span class="text-red"><%= result[h].coinPrice %></span><br />
+          코인 수량 : <span class="text-red"><%= result[h].coinQuantity %></span>
+          , 총 구매 가격 : <span class="text-red"><%= result[h].totalPrice %></span><br />
+          날짜 : <span class="text-red"><%= moment(result[h].regDate).format('YYYY-MM-DD hh:mm:ss') %></span></li>
           <% } %>
         </ul>
       </p>
