@@ -1,4 +1,5 @@
 const buyHistory = require('../model/buyHistory');
+const setting = require('../model/setting');
 
 let mongoService = {
   saveHistory: function (data) {
@@ -14,6 +15,23 @@ let mongoService = {
   list: function (callback) {
     buyHistory.find({}).sort({regDate: -1}).exec(function (err, result) {
       callback(result);
+    });
+  },
+
+  getSetting: function (callback) {
+    setting.findOne(function (err, result) {
+      callback(result);
+    });
+  },
+
+  setSetting: function (data, callback) {
+    setting.findOneAndUpdate({}, {$set: data}, {upsert: true}, function (err, result) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+
+      callback(true);
     });
   }
 }

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>BinanceApi</title>
+    <link rel='stylesheet' href='/css/a.css' />
+  </head>
+  <body>
+    <nav></nav>
+    <div class="wrap">
+      <h1>설정</h1>
+      <h5>placeholder에는 현재 설정 값이 표시됩니다.</h5>
+      <p>
+        <b>코인 이름 : </b><input id="i_coin" type="text" placeholder="<%= result.coin %>" maxlength="6"/>
+      </p>
+      <p>
+        <b>USDT 수량 : </b><input id="i_limit" type="text" placeholder="<%= result.limit %>" maxlength="8" />
+      </p>
+      <br />
+      <p>
+        <span id="btn_setting" class="btn color-red">설정 완료</span>
+        <a href="/" class="btn color-black">구매 페이지</a>
+      </p>
+    </div>
+  </body>
+  <script type="text/javascript" src="/js/jquery.min.js"></script>
+  <script type="text/javascript" src="/js/a.js"></script>
+</html>

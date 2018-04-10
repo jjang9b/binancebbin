@@ -1,28 +1,14 @@
-body {
-  overflow-x: hidden;
-  width: 100%;
-  font: 14px;
-}
-ul {margin: 0;padding: 0}
-li {margin-top: 0.5em}
-
-.wrap {
-  padding: 1.5em;
-}
-
-.btn {
-  line-height: 320%;
-  border:1px solid #0a3c59;
-  padding:10.5px 21px;
-  border-radius:6px;
-  text-decoration: none;
-  vertical-align: middle;
-  border:0px;
-  cursor:pointer;
-  margin:0 1em 0 0;
-}
-
-.color-black {background-color:black;color:white;}
-.color-gray {background-color:#f1f1f1;color:black;}
-.color-yellow {background-color:#ffd152;color:black;}
-.text-red {color:red}
+body{margin:0;overflow-x:hidden;width:100%;font:14px;}
+ul{margin:0;padding:0}
+li{margin-top:0.5em}
+nav{width:100%;height:3.3em;background-color:#584b4f;}
+input{line-height:220%;border-bottom:2px solid;border-top:0;border-left:0;border-right:0;outline:none}
+.wrap{margin:1.5em 0 0 1.5em;}
+.s-btn{line-height:320%;border:1px solid #121212;padding:7px 7px;border-radius:6px;text-decoration:none;vertical-align: middle;cursor:pointer;margin:0 1em 0 0;}
+.btn{line-height:320%;border:1px solid #121212;padding:10.5px 21px;border-radius:6px;text-decoration:none;vertical-align: middle;cursor:pointer;margin:0 1em 0 0;}
+.color-black{background-color:black;color:white;}
+.color-gray{background-color:#f1f1f1;color:black;}
+.color-yellow{background-color:#ffd152;color:black;}
+.color-red{background-color:#980000;color:white;border: 1px solid #818181;}
+.text-red{color:red}
+.fr{position:relative;float:right}

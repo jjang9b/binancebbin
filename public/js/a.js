@@ -1,16 +1,50 @@
 (function(){
   "use strict";
 
-  $(document).ready(function(){
+  $(document).ready(function () {
     var DATA = {
       buy: false
     }
 
     var DOM = {
-      btnBuy: $('#btn_buy')
+      iCoin: $('#i_coin'),
+      iLimit: $('#i_limit'),
+      btnBuy: $('#btn_buy'),
+      btnSetting: $('#btn_setting'),
+      aReload: $('#a_reload'),
     }
 
-    DOM.btnBuy.click(function(){
+    DOM.aReload.click(function () {
+        location.reload();
+    });
+
+    DOM.iCoin.keyup(function () {
+      var str = $(this).val();
+      $(this).val(str.toUpperCase());
+    });
+
+    DOM.btnSetting.click(function () {
+      if (DOM.iCoin.val() == '' || DOM.iCoin.val().length != 6) {
+        return alert('코인 이름을 정확히 입력하세요.');
+      }
+
+      if (DOM.iLimit.val() == '') {
+        return alert('USDT 수량을 입력하세요.');
+      }
+
+      $.post('/setting', {coin: DOM.iCoin.val(), limit: DOM.iLimit.val()}, function (ret) {
+        if (ret.code == 0) {
+          alert('정상적으로 설정 완료했습니다!');
+          return location.reload();
+        }
+
+        return alert('[에러] 설정시 오류가 발생했습니다.');
+      }, 'json').fail(function (err) {
+        alert('[에러] 설정 통신 오류!');
+      });
+    });
+
+    DOM.btnBuy.click(function () {
       if (DATA.buy) {
         return alert('구매 진행 중입니다.');
       }
