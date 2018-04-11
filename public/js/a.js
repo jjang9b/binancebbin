@@ -12,6 +12,13 @@
       btnBuy: $('#btn_buy'),
       btnSetting: $('#btn_setting'),
       aReload: $('#a_reload'),
+      tabHistory: $('#t_history'),
+    }
+
+    if (DOM.tabHistory.length > 0) {
+      DOM.tabHistory.DataTable({
+        "order": [[0, 'dsesc']]
+      });
     }
 
     DOM.aReload.click(function () {
@@ -70,6 +77,7 @@
 
         alert('정상 구매 성공하였습니다.');
       }, 'json').fail(function (err) {
+        DATA.buy = false;
         console.log(err);
         alert('[에러] 구매 에러가 발생했습니다.');
       });

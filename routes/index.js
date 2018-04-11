@@ -73,96 +73,124 @@ router.post('/buy', function (req, res) {
       return res.send(result);
     }
 
-    binance.prices(coinUsdt, (err, ticker) => {
-      let usdtQuantity = 0;
-      let usdtPrice = 0;
-      let usdtResult = false;
+    binance.exchangeInfo(function(err, exInfo) {
+      let usdtInfo = {};
+      let coinInfo = {};
 
-      if (err) {
-        result.msg = err;
-        return res.send(result);
+      for(var a in exInfo.symbols) {
+        if (exInfo.symbols[a].symbol == coinUsdt) {
+          usdtInfo.tickSize = exInfo.symbols[a].filters[0].tickSize;
+          usdtInfo.stepSize = exInfo.symbols[a].filters[1].stepSize;
+          if (usdtInfo.tickSize >= 1) {
+            usdtInfo.priceFixed = 0;
+          } else {
+            usdtInfo.priceFixed = usdtInfo.tickSize.indexOf("1") -1;
+          }
+
+          if (usdtInfo.stepSize >= 1) {
+            usdtInfo.quantityFixed = 0;
+          } else {
+            usdtInfo.quantityFixed = usdtInfo.stepSize.indexOf("1") -1;
+          }
+        }
+
+        if (exInfo.symbols[a].symbol == set.coin) {
+          coinInfo.tickSize = exInfo.symbols[a].filters[0].tickSize;
+          coinInfo.stepSize = exInfo.symbols[a].filters[1].stepSize;
+          if (coinInfo.tickSize >= 1) {
+            coinInfo.priceFixed = 0;
+          } else {
+            coinInfo.priceFixed = coinInfo.tickSize.indexOf("1") -1;
+          }
+
+          if (coinInfo.stepSize >= 1) {
+            coinInfo.quantityFixed = 0;
+          } else {
+            coinInfo.quantityFixed = coinInfo.stepSize.indexOf("1") -1;
+          }
+        }
       }
 
-      usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(ticker[coinUsdt] * 0.0001)).toFixed(2);
-      usdtQuantity = (set.limit / usdtPrice).toFixed(6);
+      binance.prices(coinUsdt, (err, ticker) => {
+        let usdtQuantity = 0;
+        let usdtPrice = 0;
+        let usdtResult = false;
 
-      binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
         if (err) {
           result.msg = err;
           return res.send(result);
         }
 
-        if (buyRes.orderId) {
-          usdtResult = true;
-          result.msg = 'usdt 구매 번호 : ' + buyRes.orderId + ', 구매 가격 : ' + buyRes.price + ', 구매 수량 : ' + buyRes.executedQty;
-        }
+        usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(usdtInfo.tickSize)).toFixed(usdtInfo.priceFixed);
+        usdtQuantity = (set.limit / usdtPrice).toFixed(usdtInfo.quantityFixed) - usdtInfo.stepSize;
 
-        if (isTest) {
-          usdtResult = true;
-        }
+        binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
+          if (err) {
+            result.msg = err;
+            return res.send(result);
+          }
 
-        /* 2. 실제 구매 코인 */
-        if (usdtResult) {
-          mongoSvc.saveHistory({
-            orderId: buyRes.orderId,
-            coinName: coinUsdt,
-            coinPrice: usdtPrice,
-            coinQuantity: usdtQuantity,
-            totalPrice: usdtPrice * usdtQuantity
-          });
+          if (buyRes.orderId) {
+            usdtResult = true;
+            result.msg = 'usdt 구매 번호 : ' + buyRes.orderId + ', 구매 가격 : ' + buyRes.price + ', 구매 수량 : ' + buyRes.executedQty;
+          }
 
-          let coinPrice = 0;
-          let coinQuantity = 0;
+          if (isTest) {
+            usdtResult = true;
+          }
 
-          binance.exchangeInfo(function(err, data) {
-            for(var a in data.symbols) {
-              if (data.symbols[a].symbol == set.coin) {
-                let tickSize = data.symbols[a].filters[0].tickSize;
-                let stepSize = data.symbols[a].filters[1].stepSize;
-                let priceFixed = tickSize.indexOf("1") -1;
-                let quantityFixed = stepSize.indexOf("1") -1;
+          /* 2. 실제 구매 코인 */
+          if (usdtResult) {
+            mongoSvc.saveHistory({
+              orderId: buyRes.orderId,
+              coinName: coinUsdt,
+              coinPrice: usdtPrice,
+              coinQuantity: usdtQuantity,
+              totalPrice: usdtPrice * usdtQuantity
+            });
 
-                binance.prices(set.coin, (err, ticker) => {
-                  if (err) {
-                    result.msg = err;
-                    return res.send(result);
-                  }
+            let coinPrice = 0;
+            let coinQuantity = 0;
 
-                  coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(tickSize)).toFixed(priceFixed);
-                  coinQuantity = (usdtQuantity / coinPrice).toFixed(quantityFixed);
-
-                  binance.buy(set.coin, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
-                    if (err) {
-                      result.msg = err;
-                      return res.send(result);
-                    }
-
-                    if (buyRes.orderId) {
-                      result.code = 0;
-                      result.msg += '\n' + set.coin + ' 구매 번호 : ' + buyRes.orderId + ', 구매 가격 : ' + buyRes.price + ', 구매 수량 : ' + buyRes.executedQty;
-                    }
-
-                    if (isTest) {
-                      result.code = 0;
-                    }
-
-                    if (result.code == 0) {
-                      mongoSvc.saveHistory({
-                        orderId: buyRes.orderId,
-                        coinName: set.coin,
-                        coinPrice,
-                        coinQuantity,
-                        totalPrice: coinPrice * coinQuantity
-                      });
-                    }
-
-                    res.send(result);
-                  });
-                });
+            binance.prices(set.coin, (err, ticker) => {
+              if (err) {
+                result.msg = err;
+                return res.send(result);
               }
-            }
-          });
-        }
+
+              coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(coinInfo.tickSize)).toFixed(coinInfo.priceFixed);
+              coinQuantity = (usdtQuantity / coinPrice).toFixed(coinInfo.quantityFixed) - coinInfo.stepSize;
+
+              binance.buy(set.coin, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
+                if (err) {
+                  result.msg = err;
+                  return res.send(result);
+                }
+
+                if (buyRes.orderId) {
+                  result.code = 0;
+                  result.msg += '\n' + set.coin + ' 구매 번호 : ' + buyRes.orderId + ', 구매 가격 : ' + buyRes.price + ', 구매 수량 : ' + buyRes.executedQty;
+                }
+
+                if (isTest) {
+                  result.code = 0;
+                }
+
+                if (result.code == 0) {
+                  mongoSvc.saveHistory({
+                    orderId: buyRes.orderId,
+                    coinName: set.coin,
+                    coinPrice,
+                    coinQuantity,
+                    totalPrice: coinPrice * coinQuantity
+                  });
+                }
+
+                res.send(result);
+              });
+            });
+          }
+        });
       });
     });
   });

@@ -3,24 +3,42 @@
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <title>BinanceApi</title>
+
     <link rel='stylesheet' href='/css/a.css' />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.css"/>
   </head>
   <body>
     <nav></nav>
     <div class="wrap">
       <h1>구매 내역</h1>
       <p>
-        <ul>
+        <table id="t_history">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>코인 이름</th>
+              <th>코인 가격</th>
+              <th>코인 수량</th>
+              <th>총 구매 가격</th>
+            </tr>
+          </thead>
+          <tbody>
           <% for (var h in result) { %>
-          <li>코인 이름 : <span class="text-red"><%= result[h].coinName %></span>
-          , 코인 가격 : <span class="text-red"><%= result[h].coinPrice %></span><br />
-          코인 수량 : <span class="text-red"><%= result[h].coinQuantity %></span>
-          , 총 구매 가격 : <span class="text-red"><%= result[h].totalPrice %></span><br />
-          날짜 : <span class="text-red"><%= moment(result[h].regDate).format('YYYY-MM-DD hh:mm:ss') %></span></li>
+          <tr>
+            <td><%= moment(result[h].regDate).format('YYYY-MM-DD hh:mm:ss') %></td>
+            <td><%= result[h].coinName %></td>
+            <td><span class="text-red"><%= result[h].coinPrice %></span></td>
+            <td><%= result[h].coinQuantity %></td>
+            <td><span class="text-red"><%= result[h].totalPrice %></span></td>
+          </tr>
           <% } %>
-        </ul>
+          </tbody>
+        </table>
       </p>
       <p><a href="/" class="btn color-black">구매 페이지</a></p>
     </div>
   </body>
+  <script type="text/javascript" src="/js/jquery.min.js"></script>
+  <script type="text/javascript" src="/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" src="/js/a.js"></script>
 </html>
