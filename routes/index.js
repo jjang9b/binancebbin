@@ -23,6 +23,10 @@ router.get('/', function (req, res, next) {
     }
 
     mongoSvc.getSetting(function (set) {
+      if (!set) {
+        set = {coin: null, limit: 0};
+      }
+
       let data = {
         setCoin: set.coin,
         setLimit: set.limit,
@@ -39,8 +43,12 @@ router.get('/', function (req, res, next) {
 
 /* 2. 설정 */
 router.get('/setting', function (req, res, next) {
-  mongoSvc.getSetting(function (result) {
-    res.render('setting', {result});
+  mongoSvc.getSetting(function (set) {
+    if (!set) {
+      set = {coin: null, limit: 0};
+    }
+
+    res.render('setting', {set});
   });
 });
 
@@ -61,6 +69,31 @@ router.post('/buy', function (req, res) {
 
   /* 1. usdt => btc 구매. */
   mongoSvc.getSetting(function (set) {
+    if (!set) {
+      return res.send(result);
+    }
+
+    binance.exchangeInfo(function(err, data) {
+      for(var a in data.symbols) {
+        if (data.symbols[a].symbol == "BTCUSDT") {
+
+          console.log(data.symbols[a].filters);
+
+          let tickSize = data.symbols[a].filters[0].tickSize;
+          let stepSize = data.symbols[a].filters[1].stepSize;
+          let priceFixed = 8;
+          let quantityFixed = 8;
+
+          if (tickSize >= 1) {
+            priceFixed = 0;
+          }
+          if (stepSize >= 1) {
+            quantityFixed = 0;
+          }
+        }
+      }
+    });
+
     binance.prices(coinUsdt, (err, ticker) => {
       let usdtQuantity = 0;
       let usdtPrice = 0;
@@ -71,8 +104,8 @@ router.post('/buy', function (req, res) {
         return res.send(result);
       }
 
-      usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(ticker[coinUsdt] * 0.0001)).toFixed(8);
-      usdtQuantity = (set.limit / usdtPrice).toFixed(8);
+      usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(ticker[coinUsdt] * 0.0001)).toFixed(2);
+      usdtQuantity = (set.limit / usdtPrice).toFixed(6);
 
       binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
         if (err) {
