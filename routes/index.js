@@ -73,27 +73,6 @@ router.post('/buy', function (req, res) {
       return res.send(result);
     }
 
-    binance.exchangeInfo(function(err, data) {
-      for(var a in data.symbols) {
-        if (data.symbols[a].symbol == "BTCUSDT") {
-
-          console.log(data.symbols[a].filters);
-
-          let tickSize = data.symbols[a].filters[0].tickSize;
-          let stepSize = data.symbols[a].filters[1].stepSize;
-          let priceFixed = 8;
-          let quantityFixed = 8;
-
-          if (tickSize >= 1) {
-            priceFixed = 0;
-          }
-          if (stepSize >= 1) {
-            quantityFixed = 0;
-          }
-        }
-      }
-    });
-
     binance.prices(coinUsdt, (err, ticker) => {
       let usdtQuantity = 0;
       let usdtPrice = 0;
@@ -140,15 +119,8 @@ router.post('/buy', function (req, res) {
               if (data.symbols[a].symbol == set.coin) {
                 let tickSize = data.symbols[a].filters[0].tickSize;
                 let stepSize = data.symbols[a].filters[1].stepSize;
-                let priceFixed = 8;
-                let quantityFixed = 8;
-
-                if (tickSize >= 1) {
-                  priceFixed = 0;
-                }
-                if (stepSize >= 1) {
-                  quantityFixed = 0;
-                }
+                let priceFixed = tickSize.indexOf("1") -1;
+                let quantityFixed = stepSize.indexOf("1") -1;
 
                 binance.prices(set.coin, (err, ticker) => {
                   if (err) {
@@ -156,7 +128,7 @@ router.post('/buy', function (req, res) {
                     return res.send(result);
                   }
 
-                  coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(ticker[set.coin] * 0.0001)).toFixed(priceFixed);
+                  coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(tickSize)).toFixed(priceFixed);
                   coinQuantity = (usdtQuantity / coinPrice).toFixed(quantityFixed);
 
                   binance.buy(set.coin, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
