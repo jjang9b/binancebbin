@@ -25,7 +25,7 @@
           <tbody>
           <% for (var h in result) { %>
           <tr>
-            <td><%= moment(result[h].regDate).format('YYYY-MM-DD hh:mm:ss') %></td>
+            <td><%= moment(result[h].regDate).format('YYYY-MM-DD HH:mm:ss') %></td>
             <td><%= result[h].coinName %></td>
             <td><span class="text-red"><%= result[h].coinPrice %></span></td>
             <td><%= result[h].coinQuantity %></td>

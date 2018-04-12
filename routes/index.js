@@ -53,14 +53,87 @@ router.get('/setting', function (req, res, next) {
 });
 
 router.post('/setting', function (req, res) {
-  mongoSvc.setSetting({coin: req.body.coin, limit: req.body.limit}, function (ret) {
-    let result = {code: -1, msg: null};
+  let result = {code: -1, msg: null};
 
-    if (ret) {
-      result.code = 0;
-    }
+  binance.exchangeInfo(function(err, exInfo) {
+    binance.prices(coinUsdt, (err, ticker) => {
+      let usdtQuantity = 0;
 
-    res.send(result);
+      for(var a in exInfo.symbols) {
+        if (exInfo.symbols[a].symbol == coinUsdt) {
+          let tickSize = exInfo.symbols[a].filters[0].tickSize;
+          let stepSize = exInfo.symbols[a].filters[1].stepSize;
+          let minNotional = exInfo.symbols[a].filters[2].minNotional;
+          let priceFixed = 0;
+          let quantityFixed = 0;
+
+          if (tickSize >= 1) {
+            priceFixed = 0;
+          } else {
+            priceFixed = tickSize.indexOf("1") -1;
+          }
+
+          if (stepSize >= 1) {
+            quantityFixed = 0;
+          } else {
+            quantityFixed = stepSize.indexOf("1") -1;
+          }
+
+          let usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(tickSize * 2)).toFixed(priceFixed);
+          usdtQuantity = ((req.body.limit / usdtPrice) - (stepSize * 2)).toFixed(quantityFixed);
+
+          if (minNotional > (usdtPrice * usdtQuantity)) {
+            result.msg = 'USDT 최소 총 구매 금액보다 작습니다.'
+              + '\n(BTC-USDT 현재가 * 수량 기준) USDT 수량을 늘려주세요.'
+              + '\n현재 설정 총 구매 금액 : ' + (usdtPrice * usdtQuantity)
+              + '\n최소 총 구매 금액 : ' + minNotional;
+            return res.send(result);
+          }
+        }
+      }
+
+      for(var a in exInfo.symbols) {
+        if (exInfo.symbols[a].symbol == req.body.coin) {
+          let tickSize = exInfo.symbols[a].filters[0].tickSize;
+          let stepSize = exInfo.symbols[a].filters[1].stepSize;
+          let minNotional = exInfo.symbols[a].filters[2].minNotional;
+          let priceFixed = 0;
+          let quantityFixed = 0;
+
+          if (tickSize >= 1) {
+            priceFixed = 0;
+          } else {
+            priceFixed = tickSize.indexOf("1") -1;
+          }
+
+          if (stepSize >= 1) {
+            quantityFixed = 0;
+          } else {
+            quantityFixed = stepSize.indexOf("1") -1;
+          }
+
+          let price = (parseFloat(ticker[req.body.coin]) + parseFloat(tickSize * 2)).toFixed(priceFixed);
+          quantity = ((usdtQuantity / price) - (stepSize * 2)).toFixed(quantityFixed);
+
+          if (minNotional > (price * quantity)) {
+            result.msg = req.body.coin + ' 코인을 구매하기 위한 총 최소 금액보다 작습니다.\n'
+              + '\nUSDT => BTC로 구매한 수량으로 예상한 총 금액입니다.'
+              + '\n현재 설정 총 구매 금액 : ' + (price * quantity)
+              + '\n최소 총 구매 금액 : ' + minNotional;
+
+            return res.send(result);
+          }
+        }
+      }
+
+      mongoSvc.setSetting({coin: req.body.coin, limit: req.body.limit}, function (ret) {
+        if (ret) {
+          result.code = 0;
+        }
+
+        res.send(result);
+      });
+    });
   });
 });
 
@@ -121,8 +194,8 @@ router.post('/buy', function (req, res) {
           return res.send(result);
         }
 
-        usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(usdtInfo.tickSize)).toFixed(usdtInfo.priceFixed);
-        usdtQuantity = (set.limit / usdtPrice).toFixed(usdtInfo.quantityFixed) - usdtInfo.stepSize;
+        usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(usdtInfo.tickSize * 2)).toFixed(usdtInfo.priceFixed);
+        usdtQuantity = ((set.limit / usdtPrice) - (usdtInfo.stepSize * 2)).toFixed(usdtInfo.quantityFixed);
 
         binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
           if (err) {
@@ -158,8 +231,8 @@ router.post('/buy', function (req, res) {
                 return res.send(result);
               }
 
-              coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(coinInfo.tickSize)).toFixed(coinInfo.priceFixed);
-              coinQuantity = (usdtQuantity / coinPrice).toFixed(coinInfo.quantityFixed) - coinInfo.stepSize;
+              coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(coinInfo.tickSize * 2)).toFixed(coinInfo.priceFixed);
+              coinQuantity = ((usdtQuantity / coinPrice) - (coinInfo.stepSize * 2)).toFixed(coinInfo.quantityFixed);
 
               binance.buy(set.coin, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
                 if (err) {

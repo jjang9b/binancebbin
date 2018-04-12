@@ -25,13 +25,8 @@
         location.reload();
     });
 
-    DOM.iCoin.keyup(function () {
-      var str = $(this).val();
-      $(this).val(str.toUpperCase());
-    });
-
     DOM.btnSetting.click(function () {
-      if (DOM.iCoin.val() == '' || DOM.iCoin.val().length != 6) {
+      if (DOM.iCoin.val() == '') {
         return alert('코인 이름을 정확히 입력하세요.');
       }
 
@@ -39,13 +34,15 @@
         return alert('USDT 수량을 입력하세요.');
       }
 
-      $.post('/setting', {coin: DOM.iCoin.val(), limit: DOM.iLimit.val()}, function (ret) {
+      var coin = DOM.iCoin.val().toUpperCase() + 'BTC';
+
+      $.post('/setting', {coin, limit: DOM.iLimit.val()}, function (ret) {
         if (ret.code == 0) {
           alert('정상적으로 설정 완료했습니다!');
           return location.reload();
         }
 
-        return alert('[에러] 설정시 오류가 발생했습니다.');
+        return alert('[에러] 설정 오류가 발생했습니다.\n' + ret.msg);
       }, 'json').fail(function (err) {
         alert('[에러] 설정 통신 오류!');
       });
@@ -67,7 +64,7 @@
 
         if (!ret) {
           console.log(ret.msg);
-          return alert('[에러] 구매 에러가 발생했습니다.');
+          return alert('[에러] 구매 에러가 발생했습니다.\n' + ret.msg);
         }
 
         if (ret.code == -1) {
