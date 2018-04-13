@@ -56,7 +56,12 @@ router.post('/setting', function (req, res) {
   let result = {code: -1, msg: null};
 
   binance.exchangeInfo(function(err, exInfo) {
-    binance.prices(coinUsdt, (err, ticker) => {
+    binance.prices((err, ticker) => {
+      if (!ticker[req.body.coin]) {
+        result.msg = '존재하지 않는 코인입니다.';
+        return res.send(result);
+      }
+
       let usdtQuantity = 0;
 
       for(var a in exInfo.symbols) {
