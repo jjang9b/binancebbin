@@ -4,6 +4,7 @@ const Promise = require('promise');
 const binance = require('node-binance-api');
 const mongoSvc = require('../service/mongoService');
 const isTest = true;
+const maxPrice = 50000;
 
 binance.options({
   APIKEY: '0UYv2ciuSV7K6l88w9OvDfKpKGaWU6N0D0Xl2NEvp9J8EBPMfVYhndOLtuhkCjL9',
@@ -201,6 +202,11 @@ router.post('/buy', function (req, res) {
 
         usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(usdtInfo.tickSize * 2)).toFixed(usdtInfo.priceFixed);
         usdtQuantity = ((set.limit / usdtPrice) - (usdtInfo.stepSize * 2)).toFixed(usdtInfo.quantityFixed);
+
+        if (usdtPrice * usdtQuantity > maxPrice) {
+          result.msg = '[에러] 최대 구매 금액을 넘었습니다.';
+          return res.send(result);
+        }
 
         binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
           if (err) {
