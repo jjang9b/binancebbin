@@ -11,7 +11,7 @@
       <h1>설정</h1>
       <h5>placeholder에는 현재 설정 값이 표시됩니다.</h5>
       <p>
-        <b>코인 이름 : </b><input id="i_coin" type="text" placeholder="<%= set.coin.replace(/BTC/g, '') %>" maxlength="4" value="<%= set.coin.replace(/BTC/g, '') %>" />
+        <b>코인 이름 : </b><input id="i_coin" type="text" placeholder="<%= (set.coin ? set.coin.replace(/BTC/g, '') : set.coin) %>" maxlength="4" value="<%= (set.coin ? set.coin.replace(/BTC/g, '') : set.coin) %>" />
       </p>
       <p>
         <b>USDT 수량 : </b><input id="i_limit" type="text" placeholder="<%= set.limit %>" maxlength="8" value="<%= set.limit %>" />
