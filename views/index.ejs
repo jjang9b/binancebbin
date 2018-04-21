@@ -11,7 +11,7 @@
       <a id="a_reload" href="javascript:void(0)" class="s-btn color-black"><b><small>갱신</small></b></a>
     </nav>
     <div class="wrap">
-      <h5>설정 코인 이름 : <span class="text-red"><%= setCoin %></span>&nbsp;&nbsp;설정 USDT 수량 : <span class="text-red"><%= setLimit %></span></h5>
+      <h5>설정 코인 이름 : <span class="text-red"><%= setCoin %></span>&nbsp;&nbsp;설정 USDT 수량 : <span class="text-red"><%= setAmount %></span></h5>
       <h1><%= coinUsdt %> 현재 가격</h1>
       <p><%= coinUsdtTicker %></p>
       <br />
@@ -24,6 +24,8 @@
       </p>
     </div>
   </body>
+  <input id="i_coin" type="hidden" value="<%= setCoin %>" />
+  <input id="i_amount" type="hidden" value="<%= setAmount %>" />
   <script type="text/javascript" src="/js/jquery.min.js"></script>
   <script type="text/javascript" src="/js/a.js"></script>
 </html>
