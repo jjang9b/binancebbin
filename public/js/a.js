@@ -69,14 +69,14 @@
 
         if (ret.code == -1) {
           console.log(ret.msg);
-	  return alert('[에러] 구매 에러가 발생했습니다.\n' + ret.msg.body);
+          return alert('[에러] 구매 에러가 발생했습니다. -1');
         }
 
         alert('정상 구매 성공하였습니다.');
       }, 'json').fail(function (err) {
         DATA.buy = false;
         console.log(err);
-        alert('[에러] 구매 에러가 발생했습니다. fail');
+        alert('[에러] 구매 에러가 발생했습니다.');
       });
     });
   });
