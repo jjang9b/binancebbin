@@ -3,14 +3,14 @@ const router = express.Router();
 const Promise = require('promise');
 const binance = require('node-binance-api');
 const mongoSvc = require('../service/mongoService');
-const isTest = true;
-const maxPrice = 50000;
+const isTest = false;
+const maxPrice = 10000;
 
 binance.options({
-  APIKEY: '0UYv2ciuSV7K6l88w9OvDfKpKGaWU6N0D0Xl2NEvp9J8EBPMfVYhndOLtuhkCjL9',
-  APISECRET: 'hclcY8eByOj5AKDNaIGzvv3n1SjLDUCJ4uH91laWNbXqJXUfCCesnEG5oK7e4Em9',
-  useServerTime: true, // If you get timestamp errors, synchronize to server time at startup
-  test: isTest // If you want to use sandbox mode where orders are simulated
+  APIKEY: 'S84kZ1Pu37NOt5rI1yIQEGV2isnaPX2YAaYfNiTGIUMEdALDP6MPy1UDmG92DcHY',
+  APISECRET: 'bs8uoGSiiBNZXKxz9zvGNj7alto5eF0zY9lPYPxRrdLPRhb7lmEx2M9fEQuFcL0q',
+  useServerTime: true,
+  test: isTest
 });
 
 /* needed setting variables. */
@@ -196,7 +196,7 @@ router.post('/buy', function (req, res) {
         let usdtResult = false;
 
         if (err) {
-          result.msg = err;
+          result.msg = '[' + coinUsdt + ']' + err;
           return res.send(result);
         }
 
@@ -209,14 +209,16 @@ router.post('/buy', function (req, res) {
         }
 
         binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
+          let usdtOrderId = buyRes.orderId;
+
           if (err) {
-            result.msg = err;
+            result.msg = '[' + coinUsdt + ']' + err;
+
             return res.send(result);
           }
 
           if (buyRes.orderId) {
             usdtResult = true;
-            result.msg = 'usdt 구매 번호 : ' + buyRes.orderId + ', 구매 가격 : ' + buyRes.price + ', 구매 수량 : ' + buyRes.executedQty;
           }
 
           if (isTest) {
@@ -225,35 +227,40 @@ router.post('/buy', function (req, res) {
 
           /* 2. 실제 구매 코인 */
           if (usdtResult) {
-            mongoSvc.saveHistory({
-              orderId: buyRes.orderId,
-              coinName: coinUsdt,
-              coinPrice: usdtPrice,
-              coinQuantity: usdtQuantity,
-              totalPrice: usdtPrice * usdtQuantity
-            });
+	    mongoSvc.saveHistory({
+	      orderId: usdtOrderId,
+	      coinName: coinUsdt,
+	      coinPrice: usdtPrice,
+	      coinQuantity: usdtQuantity,
+	      totalPrice: usdtPrice * usdtQuantity
+	    });
 
             let coinPrice = 0;
             let coinQuantity = 0;
 
             binance.prices(set.coin, (err, ticker) => {
               if (err) {
-                result.msg = err;
+                result.msg = '[' + set.coin + ']' + err;
+
                 return res.send(result);
               }
 
               coinPrice = (parseFloat(ticker[set.coin]) + parseFloat(coinInfo.tickSize * 2)).toFixed(coinInfo.priceFixed);
               coinQuantity = ((usdtQuantity / coinPrice) - (coinInfo.stepSize * 2)).toFixed(coinInfo.quantityFixed);
 
-              binance.buy(set.coin, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
+              binance.buy(set.coin, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, coinBuyRes) => {
                 if (err) {
-                  result.msg = err;
+                  result.msg = '[' + set.coin + ']' + err;
+
+                  binance.cancel(coinUsdt, usdtOrderId, (error, response, symbol) => {
+	            console.log(symbol + " cancel response:", response);
+	          });
+
                   return res.send(result);
                 }
 
-                if (buyRes.orderId) {
+                if (coinBuyRes.orderId) {
                   result.code = 0;
-                  result.msg += '\n' + set.coin + ' 구매 번호 : ' + buyRes.orderId + ', 구매 가격 : ' + buyRes.price + ', 구매 수량 : ' + buyRes.executedQty;
                 }
 
                 if (isTest) {
@@ -262,7 +269,7 @@ router.post('/buy', function (req, res) {
 
                 if (result.code == 0) {
                   mongoSvc.saveHistory({
-                    orderId: buyRes.orderId,
+                    orderId: coinBuyRes.orderId,
                     coinName: set.coin,
                     coinPrice,
                     coinQuantity,
