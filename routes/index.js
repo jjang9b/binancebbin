@@ -244,8 +244,6 @@ router.post('/buy', function (req, res) {
             coinPrice = (parseFloat(ticker[BUY_COIN]) + parseFloat(coinInfo.tickSize * 2)).toFixed(coinInfo.priceFixed);
             coinQuantity = ((usdtQuantity / coinPrice) - (coinInfo.stepSize * 2)).toFixed(coinInfo.quantityFixed);
 
-            coinPrice = 0.000000000001;
-
             binance.buy(BUY_COIN, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
               if (err) {
                 result.msg = '[' + BUY_COIN + ']' + err.body;
