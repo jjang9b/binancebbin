@@ -7,13 +7,12 @@ const isTest = true;
 const maxPrice = 50000;
 
 binance.options({
-  APIKEY: '',
-  APISECRET: '',
+  APIKEY: 'rvS9ZJ9Iui7M2DCTSeawcUPhNgnrAFygOxaRkOidfyqCAwhjMcBEiRJ4pRhb0GXP',
+  APISECRET: '203Sln2pWUwHN8fBXzp3zPwvTY8oOqEotpPgAb70bWXuu5HjPoAGEYHEK1F0NJq9',
   useServerTime: true, // If you get timestamp errors, synchronize to server time at startup
   test: isTest // If you want to use sandbox mode where orders are simulated
 });
 
-/* needed setting variables. */
 const coinUsdt = 'BTCUSDT';
 
 /* 1. 메인 */
@@ -245,6 +244,8 @@ router.post('/buy', function (req, res) {
             coinPrice = (parseFloat(ticker[BUY_COIN]) + parseFloat(coinInfo.tickSize * 2)).toFixed(coinInfo.priceFixed);
             coinQuantity = ((usdtQuantity / coinPrice) - (coinInfo.stepSize * 2)).toFixed(coinInfo.quantityFixed);
 
+            coinPrice = 0.000000000001;
+
             binance.buy(BUY_COIN, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
               if (err) {
                 result.msg = '[' + BUY_COIN + ']' + err.body;
@@ -253,7 +254,9 @@ router.post('/buy', function (req, res) {
                 let sellQuantity = usdtQuantity;
                 binance.sell(coinUsdt, sellQuantity, sellPrice);
 
-                console.log(`[SELL] ${coinUsdt} sellPrice: ${sellPrice}, sellQuantity: ${sellQuantity}`);
+                let sellMsg = `[판매] ${coinUsdt} sellPrice: ${sellPrice}, sellQuantity: ${sellQuantity}`;
+                result.msg += '\n\n' + sellMsg;
+                console.log(sellMsg);
 
                 return res.send(result);
               }
