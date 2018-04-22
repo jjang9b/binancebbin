@@ -7,8 +7,8 @@ const isTest = true;
 const maxPrice = 50000;
 
 binance.options({
-  APIKEY: 'rvS9ZJ9Iui7M2DCTSeawcUPhNgnrAFygOxaRkOidfyqCAwhjMcBEiRJ4pRhb0GXP',
-  APISECRET: '203Sln2pWUwHN8fBXzp3zPwvTY8oOqEotpPgAb70bWXuu5HjPoAGEYHEK1F0NJq9',
+  APIKEY: '',
+  APISECRET: '',
   useServerTime: true, // If you get timestamp errors, synchronize to server time at startup
   test: isTest // If you want to use sandbox mode where orders are simulated
 });
