@@ -198,14 +198,20 @@ router.post('/buy', function (req, res) {
       let usdtQuantity = 0;
       let usdtPrice = 0;
       let usdtResult = false;
+      let numFixed = 0;
 
       if (err) {
-        result.msg = '[' + coinUsdt + ']' + err.body;
+        result.msg = '[' + coinUsdt + '] ' + err.body;
         return res.send(result);
       }
 
-      usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(usdtInfo.tickSize * 2)).toFixed(usdtInfo.priceFixed);
-      usdtQuantity = ((BUY_AMOUNT / usdtPrice) - (usdtInfo.stepSize * 2)).toFixed(usdtInfo.quantityFixed);
+      usdtPrice = (parseFloat(ticker[coinUsdt]) + parseFloat(usdtInfo.tickSize * 2));
+      numFixed = Math.pow(10, usdtInfo.priceFixed);
+      usdtPrice = Math.floor(usdtPrice * numFixed) / numFixed;
+
+      usdtQuantity = (BUY_AMOUNT / usdtPrice);
+      numFixed = Math.pow(10, usdtInfo.quantityFixed);
+      usdtQuantity = Math.floor(usdtQuantity * numFixed) / numFixed;
 
       if (usdtPrice * usdtQuantity > maxPrice) {
         result.msg = '[에러] 최대 구매 금액을 넘었습니다.';
@@ -214,7 +220,7 @@ router.post('/buy', function (req, res) {
 
       binance.buy(coinUsdt, usdtQuantity, usdtPrice, {type: 'LIMIT'}, (err, buyRes) => {
         if (err) {
-          result.msg = '[' + coinUsdt + ']' + err.body;
+          result.msg = '[' + coinUsdt + '] ' + err.body;
           return res.send(result);
         }
 
@@ -237,26 +243,47 @@ router.post('/buy', function (req, res) {
 
           binance.prices(BUY_COIN, (err, ticker) => {
             if (err) {
-              result.msg = '[' + BUY_COIN + ']' + err.body;
+              result.msg = '[' + BUY_COIN + '] ' + err.body;
               return res.send(result);
             }
 
-            coinPrice = (parseFloat(ticker[BUY_COIN]) + parseFloat(coinInfo.tickSize * 2)).toFixed(coinInfo.priceFixed);
-            coinQuantity = ((usdtQuantity / coinPrice) - (coinInfo.stepSize * 2)).toFixed(coinInfo.quantityFixed);
+            coinPrice = (parseFloat(ticker[BUY_COIN]) + parseFloat(coinInfo.tickSize * 4));
+            numFixed = Math.pow(10, coinInfo.priceFixed);
+            coinPrice = Math.floor(coinPrice * numFixed) / numFixed;
+
+            coinQuantity = (usdtQuantity / coinPrice);
+            numFixed = Math.pow(10, coinInfo.quantityFixed);
+            coinQuantity = Math.floor(coinQuantity * numFixed) / numFixed;
 
             binance.buy(BUY_COIN, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
+              let coinOrderId = buyRes.orderId;
+
               if (err) {
-                result.msg = '[' + BUY_COIN + ']' + err.body;
+                result.msg = '[' + BUY_COIN + '] ' + err.body;
 
-                let sellPrice = usdtPrice - (usdtInfo.tickSize * 3);
-                let sellQuantity = usdtQuantity;
-                binance.sell(coinUsdt, sellQuantity, sellPrice);
+                binance.cancel(BUY_COIN, coinOrderId, (err, cancelRes, symbol) => {
+                  if (err) {
+                    let cancelErrMsg = `[취소 에러]  ${err.body}`;
+                    console.log(cancelErrMsg);
+                    result.msg += '\n\n' + cancelErrMsg;
+                  } else {
+                    let cancelMsg = `[취소] ${symbol} orderId: ${cancelRes.orderId}`;
+                    result.msg += '\n\n' + cancelMsg;
+                    console.log(cancelMsg);
+                  }
 
-                let sellMsg = `[판매] ${coinUsdt} sellPrice: ${sellPrice}, sellQuantity: ${sellQuantity}`;
-                result.msg += '\n\n' + sellMsg;
-                console.log(sellMsg);
+                  let sellPrice = usdtPrice - (usdtInfo.tickSize * 3);
+                  let sellQuantity = usdtQuantity;
+                  binance.sell(coinUsdt, sellQuantity, sellPrice);
 
-                return res.send(result);
+                  let sellMsg = `[판매] ${coinUsdt} sellPrice: ${sellPrice}, sellQuantity: ${sellQuantity}`;
+                  result.msg += '\n\n' + sellMsg;
+                  console.log(sellMsg);
+
+                  res.send(result);
+                });
+
+                return;
               }
 
               if (buyRes.orderId || isTest) {
