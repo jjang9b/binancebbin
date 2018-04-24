@@ -247,7 +247,13 @@ router.post('/buy', function (req, res) {
               return res.send(result);
             }
 
-            coinPrice = (parseFloat(ticker[BUY_COIN]) + parseFloat(coinInfo.tickSize * 4));
+            console.log("usdtQuantity : " + usdtQuantity);
+
+            usdtQuantity = usdtQuantity - (((0.1) * usdtQuantity) / 100);
+            console.log("0.1 : " + (((0.1) * usdtQuantity) / 100));
+            console.log("usdtQuantity : " + usdtQuantity);
+
+            coinPrice = (parseFloat(ticker[BUY_COIN]) + parseFloat(coinInfo.tickSize * 3));
             numFixed = Math.pow(10, coinInfo.priceFixed);
             coinPrice = Math.floor(coinPrice * numFixed) / numFixed;
 
@@ -255,35 +261,44 @@ router.post('/buy', function (req, res) {
             numFixed = Math.pow(10, coinInfo.quantityFixed);
             coinQuantity = Math.floor(coinQuantity * numFixed) / numFixed;
 
+            if ((coinPrice * coinQuantity) > usdtQuantity) {
+              coinQuantity -= (coinInfo.stepSize * 2);
+            }
+
             binance.buy(BUY_COIN, coinQuantity, coinPrice, {type: 'LIMIT'}, (err, buyRes) => {
               let coinOrderId = buyRes.orderId;
 
               if (err) {
-                result.msg = '[' + BUY_COIN + '] ' + err.body;
+                result.msg = `[${BUY_COIN}] usdtQuantity: ${usdtQuantity}\n`
+                + `coinPrice: ${coinPrice}, coinQuantity: ${coinQuantity}\n`
+                + `total: ${coinPrice * coinQuantity}\n`
+                + `${err.body}`;
 
-                binance.cancel(BUY_COIN, coinOrderId, (err, cancelRes, symbol) => {
-                  if (err) {
-                    let cancelErrMsg = `[취소 에러]  ${err.body}`;
-                    console.log(cancelErrMsg);
-                    result.msg += '\n\n' + cancelErrMsg;
-                  } else {
-                    let cancelMsg = `[취소] ${symbol} orderId: ${cancelRes.orderId}`;
-                    result.msg += '\n\n' + cancelMsg;
-                    console.log(cancelMsg);
-                  }
+                if (coinOrderId) {
+                  binance.cancel(BUY_COIN, coinOrderId, (err, cancelRes, symbol) => {
+                    if (err) {
+                      let cancelErrMsg = `[취소 에러]  ${err.body}`;
+                      console.log(cancelErrMsg);
+                      result.msg += '\n\n' + cancelErrMsg;
+                    } else {
+                      let cancelMsg = `[취소] ${symbol} orderId: ${cancelRes.orderId}`;
+                      result.msg += '\n\n' + cancelMsg;
+                      console.log(cancelMsg);
+                    }
 
-                  let sellPrice = usdtPrice - (usdtInfo.tickSize * 3);
-                  let sellQuantity = usdtQuantity;
-                  binance.sell(coinUsdt, sellQuantity, sellPrice);
+                    res.send(result);
+                  });
+                }
 
-                  let sellMsg = `[판매] ${coinUsdt} sellPrice: ${sellPrice}, sellQuantity: ${sellQuantity}`;
-                  result.msg += '\n\n' + sellMsg;
-                  console.log(sellMsg);
+                let sellPrice = usdtPrice - (usdtInfo.tickSize * 3);
+                let sellQuantity = usdtQuantity;
+                binance.sell(coinUsdt, sellQuantity, sellPrice);
 
-                  res.send(result);
-                });
+                let sellMsg = `[판매] ${coinUsdt} sellPrice: ${sellPrice}, sellQuantity: ${sellQuantity}`;
+                result.msg += '\n\n' + sellMsg;
+                console.log(sellMsg);
 
-                return;
+                return res.send(result);
               }
 
               if (buyRes.orderId || isTest) {
